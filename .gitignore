@@ -1,0 +1,32 @@
+# .gitignore pour macOS
+
+# Général macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+.Spotlight-V100
+.Trashes
+Icon?
+.DocumentRevisions-V100
+.fseventsd
+.TemporaryItems
+.apdisk
+
+# Fichiers temporaires
+*.swp
+*.swo
+*~
+
+# Dossiers générés
+node_modules/
+dist/
+build/
+*.log
+
+# Environnements virtuels
+.env
+venv/
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
