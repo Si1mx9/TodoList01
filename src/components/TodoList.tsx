@@ -75,13 +75,13 @@ export function TodoList({
   return (
     <div className="space-y-4">
       <AnimatePresence mode="popLayout">
-        {todos.map((todo, index) => (
+        {todos.map((todo) => (
           <motion.div
             key={todo.id}
             initial={{ opacity: 0, y: 20, scale: 0.98 }}
             animate={{ opacity: 1, y: 0, scale: 1 }}
-            exit={{ opacity: 0, scale: 0.95, transition: { duration: 0.2 } }}
-            transition={{ duration: 0.3, delay: index * 0.05 }}
+            exit={{ opacity: 0, scale: 0.95, transition: { duration: 0.15 } }}
+            transition={{ duration: 0.2 }}
             layout
             className="group"
           >

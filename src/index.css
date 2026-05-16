@@ -114,8 +114,8 @@
   background: hsl(var(--muted-foreground) / 0.5);
 }
 
-/* Smooth transitions */
-* {
+/* Smooth transitions - only on interactive elements */
+a, button, input, textarea, select {
   transition-property:
     color, background-color, border-color, text-decoration-color, fill, stroke,
     opacity, box-shadow, transform, filter, backdrop-filter;

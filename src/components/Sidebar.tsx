@@ -15,6 +15,8 @@ import {
   MoreVertical,
   FolderArchive,
   Search,
+  X,
+  Trash2,
 } from 'lucide-react';
 import {
   DropdownMenu,
@@ -25,65 +27,28 @@ import {
 import { ThemeToggle } from './ThemeToggle';
 import { cn } from '@/lib/utils';
 import type { FilterType } from '@/types';
+import type { LucideIcon } from 'lucide-react';
 
-interface SidebarProps {
-  projects: Project[];
-  currentProject: Project | undefined;
-  currentFilter: FilterType;
-  todayCount: number;
-  weekCount: number;
-  overdueCount: number;
-  onSelectProject: (projectId: string | null) => void;
-  onSetFilter: (filter: FilterType) => void;
-  onCreateProject: () => void;
-  onOpenArchive: () => void;
-  onArchiveProject: (projectId: string) => void;
-  className?: string; // Add className optional prop
+interface NavItemProps {
+  icon: LucideIcon;
+  label: string;
+  count?: number;
+  isActive: boolean;
+  onClick: () => void;
+  colorClass?: string;
+  badgeVariant?: "default" | "secondary" | "destructive" | "outline";
 }
 
-export function Sidebar({
-  projects,
-  currentProject,
-  currentFilter,
-  todayCount,
-  weekCount,
-  overdueCount,
-  onSelectProject,
-  onSetFilter,
-  onCreateProject,
-  onOpenArchive,
-  onArchiveProject,
-  className, // Destructure className
-}: SidebarProps) {
-  const [hoveredProject, setHoveredProject] = useState<string | null>(null);
-
-  const totalUncompleted = projects.reduce(
-    (acc, p) => acc + p.todoIds.length,
-    0
-  );
-
-  const handleFilterClick = (filter: FilterType) => {
-    onSetFilter(filter);
-    onSelectProject(null);
-  };
-
-  const NavItem = ({
-    icon: Icon,
-    label,
-    count,
-    isActive,
-    onClick,
-    colorClass = "text-foreground",
-    badgeVariant = "secondary"
-  }: {
-    icon: any;
-    label: string;
-    count?: number;
-    isActive: boolean;
-    onClick: () => void;
-    colorClass?: string;
-    badgeVariant?: "default" | "secondary" | "destructive" | "outline";
-  }) => (
+function NavItem({
+  icon: Icon,
+  label,
+  count,
+  isActive,
+  onClick,
+  colorClass = "text-foreground",
+  badgeVariant = "secondary"
+}: NavItemProps) {
+  return (
     <Button
       variant="ghost"
       onClick={onClick}
@@ -117,6 +82,54 @@ export function Sidebar({
       )}
     </Button>
   );
+}
+
+interface SidebarProps {
+  projects: Project[];
+  currentProject: Project | undefined;
+  currentFilter: FilterType;
+  searchQuery?: string;
+  todayCount: number;
+  weekCount: number;
+  overdueCount: number;
+  onSelectProject: (projectId: string | null) => void;
+  onSetFilter: (filter: FilterType) => void;
+  onSearchChange?: (query: string) => void;
+  onCreateProject: () => void;
+  onOpenArchive: () => void;
+  onArchiveProject: (projectId: string) => void;
+  onDeleteProject?: (projectId: string) => void;
+  className?: string;
+}
+
+export function Sidebar({
+  projects,
+  currentProject,
+  currentFilter,
+  searchQuery = '',
+  todayCount,
+  weekCount,
+  overdueCount,
+  onSelectProject,
+  onSetFilter,
+  onSearchChange,
+  onCreateProject,
+  onOpenArchive,
+  onArchiveProject,
+  onDeleteProject,
+  className,
+}: SidebarProps) {
+  const [hoveredProject, setHoveredProject] = useState<string | null>(null);
+
+  const totalUncompleted = projects.reduce(
+    (acc, p) => acc + p.todoIds.length,
+    0
+  );
+
+  const handleFilterClick = (filter: FilterType) => {
+    onSetFilter(filter);
+    onSelectProject(null);
+  };
 
   return (
     <aside className={cn("w-80 bg-background/50 backdrop-blur-2xl border-r border-border/40 flex flex-col h-full shadow-2xl shadow-black/5 z-50", className)}>
@@ -134,14 +147,24 @@ export function Sidebar({
           </div>
         </div>
 
-        {/* Global Search (Visual only for now) */}
+        {/* Global Search */}
         <div className="relative mb-6 group">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground/60 transition-colors group-hover:text-primary/70" />
-          <input 
-            type="text" 
-            placeholder="Rechercher..." 
+          <input
+            type="text"
+            value={searchQuery}
+            onChange={(e) => onSearchChange?.(e.target.value)}
+            placeholder="Rechercher..."
             className="w-full h-10 pl-10 pr-4 rounded-xl bg-muted/40 border border-transparent focus:bg-background focus:border-primary/20 hover:bg-muted/60 transition-all outline-none text-sm placeholder:text-muted-foreground/50"
           />
+          {searchQuery && (
+            <button
+              onClick={() => onSearchChange?.('')}
+              className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground/60 hover:text-foreground transition-colors"
+            >
+              <X className="w-4 h-4" />
+            </button>
+          )}
         </div>
       </div>
 
@@ -262,11 +285,20 @@ export function Sidebar({
                     <DropdownMenuContent align="end" className="w-48 bg-background/90 backdrop-blur-xl border-border/40 shadow-xl rounded-xl">
                       <DropdownMenuItem
                         onClick={() => onArchiveProject(project.id)}
-                        className="gap-2 focus:bg-destructive/10 focus:text-destructive cursor-pointer"
+                        className="gap-2 cursor-pointer"
                       >
                         <FolderArchive className="w-4 h-4" />
                         Archiver le projet
                       </DropdownMenuItem>
+                      {onDeleteProject && (
+                        <DropdownMenuItem
+                          onClick={() => onDeleteProject(project.id)}
+                          className="gap-2 focus:bg-destructive/10 focus:text-destructive cursor-pointer text-destructive"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                          Supprimer le projet
+                        </DropdownMenuItem>
+                      )}
                     </DropdownMenuContent>
                 </DropdownMenu>
               </div>

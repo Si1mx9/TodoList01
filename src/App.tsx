@@ -27,10 +27,13 @@ function App() {
     todayCount,
     weekCount,
     overdueCount,
+    searchQuery,
     setFilter,
     setSort,
+    setSearchQuery,
     createProject,
     setCurrentProject,
+    deleteProject,
     archiveProject,
     unarchiveProject,
     createTodo,
@@ -47,18 +50,13 @@ function App() {
   const [isProjectFormOpen, setIsProjectFormOpen] = useState(false);
   const [selectedTodo, setSelectedTodo] = useState<TodoItem | null>(null);
   const [isArchiveOpen, setIsArchiveOpen] = useState(false);
+  const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
 
-  const handleTodoClick = (todo: TodoItem) => {
-    setSelectedTodo(todo);
-  };
-
-  const handleCloseTodoDetail = () => {
-    setSelectedTodo(null);
-  };
+  const handleTodoClick = (todo: TodoItem) => setSelectedTodo(todo);
+  const handleCloseTodoDetail = () => setSelectedTodo(null);
 
   return (
     <div className="flex h-screen bg-background text-foreground overflow-hidden font-sans antialiased selection:bg-primary/20 selection:text-primary">
-      {/* Background Gradient Effect */}
       <div className="fixed inset-0 z-[-1] bg-[radial-gradient(ellipse_at_top_right,_var(--tw-gradient-stops))] from-primary/20 via-background to-background opacity-50 pointer-events-none" />
 
       {/* Desktop Sidebar */}
@@ -67,45 +65,18 @@ function App() {
         projects={projects}
         currentProject={currentProject}
         currentFilter={filter}
+        searchQuery={searchQuery}
         todayCount={todayCount}
         weekCount={weekCount}
         overdueCount={overdueCount}
         onSelectProject={setCurrentProject}
         onSetFilter={setFilter}
+        onSearchChange={setSearchQuery}
         onCreateProject={() => setIsProjectFormOpen(true)}
         onOpenArchive={() => setIsArchiveOpen(true)}
         onArchiveProject={archiveProject}
+        onDeleteProject={deleteProject}
       />
-
-      {/* Mobile Sidebar (Sheet) */}
-      <Sheet>
-        <SheetContent side="left" className="p-0 w-80 border-r border-border/40">
-           <Sidebar
-            className="w-full border-0"
-            projects={projects}
-            currentProject={currentProject}
-            currentFilter={filter}
-            todayCount={todayCount}
-            weekCount={weekCount}
-            overdueCount={overdueCount}
-            onSelectProject={(id) => {
-              setCurrentProject(id);
-              // Close sheet logic would go here if we had control, but for now relies on user tapping outside or we need a controlled sheet state for mobile nav.
-              // For simplicity in this step, let's keep it uncontrolled or just let user close it.
-            }}
-            onSetFilter={(f) => {
-              setFilter(f);
-            }}
-            onCreateProject={() => setIsProjectFormOpen(true)}
-            onOpenArchive={() => setIsArchiveOpen(true)}
-            onArchiveProject={archiveProject}
-          />
-        </SheetContent>
-        {/* We need the Trigger to be in the Header, so we might need to lift the Sheet state up or put the Trigger there. 
-            Actually, shadcn Sheet usually requires Trigger and Content to be children of Root. 
-            To put the trigger in the header, we can use a controlled state for the Sheet.
-        */}
-      </Sheet>
 
       {/* Main Content */}
       <main className="flex-1 flex flex-col min-w-0 bg-background/50 backdrop-blur-sm relative overflow-hidden">
@@ -113,12 +84,9 @@ function App() {
         <header className="border-b border-border/50 bg-background/50 backdrop-blur-xl px-4 md:px-8 py-4 md:py-5 sticky top-0 z-10">
           <div className="flex items-center justify-between gap-4">
             <div className="flex items-center gap-3 md:gap-5">
-              {/* Mobile Menu Trigger - We need a controlled sheet for this to work cleanly across the tree, 
-                  OR we can just put a Sheet here locally for the mobile menu if we want.
-                  Let's use a local controlled state for the mobile sidebar.
-              */}
-              <Sheet>
-                 <SheetTrigger asChild>
+              {/* Mobile Menu Trigger */}
+              <Sheet open={isMobileSidebarOpen} onOpenChange={setIsMobileSidebarOpen}>
+                <SheetTrigger asChild>
                   <Button variant="ghost" size="icon" className="md:hidden -ml-2 text-muted-foreground hover:text-foreground">
                     <Menu className="w-6 h-6" />
                   </Button>
@@ -129,14 +97,17 @@ function App() {
                     projects={projects}
                     currentProject={currentProject}
                     currentFilter={filter}
+                    searchQuery={searchQuery}
                     todayCount={todayCount}
                     weekCount={weekCount}
                     overdueCount={overdueCount}
-                    onSelectProject={setCurrentProject}
-                    onSetFilter={setFilter}
-                    onCreateProject={() => setIsProjectFormOpen(true)}
-                    onOpenArchive={() => setIsArchiveOpen(true)}
+                    onSelectProject={(id) => { setCurrentProject(id); setIsMobileSidebarOpen(false); }}
+                    onSetFilter={(f) => { setFilter(f); }}
+                    onSearchChange={setSearchQuery}
+                    onCreateProject={() => { setIsProjectFormOpen(true); setIsMobileSidebarOpen(false); }}
+                    onOpenArchive={() => { setIsArchiveOpen(true); setIsMobileSidebarOpen(false); }}
                     onArchiveProject={archiveProject}
+                    onDeleteProject={deleteProject}
                   />
                 </SheetContent>
               </Sheet>
@@ -156,8 +127,8 @@ function App() {
                 </p>
               </div>
             </div>
-            <Button 
-              onClick={() => setIsTodoFormOpen(true)} 
+            <Button
+              onClick={() => setIsTodoFormOpen(true)}
               className="gap-2 shadow-lg shadow-primary/25 hover:shadow-primary/40 transition-all duration-300 h-9 md:h-11 px-3 md:px-6 text-xs md:text-sm"
               size="default"
             >
@@ -249,8 +220,6 @@ function App() {
           />
         </DialogContent>
       </Dialog>
-      
-      {/* ... other dialogs need similar mobile checks, but usually standard dialogs are somewhat responsive by default ... */}
 
       {/* Project Form Dialog */}
       <Dialog open={isProjectFormOpen} onOpenChange={setIsProjectFormOpen}>
@@ -299,9 +268,7 @@ function App() {
                     <Button
                       variant="ghost"
                       size="sm"
-                      onClick={() => {
-                        unarchiveProject(project.id);
-                      }}
+                      onClick={() => unarchiveProject(project.id)}
                     >
                       Désarchiver
                     </Button>
